@@ -1,0 +1,99 @@
+# ============================================================
+# GRPO Training Configuration
+# ============================================================
+# Usage:
+#   python train_grpo.py --config configs/exp_a_600m.yaml
+#   python train_grpo.py --config configs/exp_a_600m.yaml --languages eus_Latn zho_Hant
+#
+# CLI args override config values where both are specified.
+# ============================================================
+
+# --- Model ---
+model_name: "facebook/nllb-200-distilled-600M"
+
+# --- Data ---
+train_file: "data/flores200_dataset"          # path to parquet or directory
+eval_data_dir: "data/flores200_dataset"
+final_eval_data_dir: null                     # defaults to eval_data_dir if null
+vanilla_dir: null                             # path to pre-computed vanilla CSVs
+n_segments: null                              # cap training sentences (null = all)
+
+# --- Languages ---
+# Override with --languages on CLI for single-language runs
+languages:
+  - eus_Latn
+  - swh_Latn
+  - bod_Tibt
+  - tur_Latn
+  - jpn_Jpan
+  - zho_Hant
+  - zho_Hans
+  - yor_Latn
+  - arb_Arab
+  - bel_Cyrl
+  - ben_Beng
+  - ces_Latn
+  - pol_Latn
+
+# --- Reward ---
+reward: "hybrid"           # hybrid | semantic | comet
+reward_mode: "standard"    # standard | soft_rank | contrastive | soft_rank_contrastive
+soft_rank_temp: 0.05
+
+# --- Training ---
+n_epochs: 3
+lr: 5.0e-6
+kl_beta: 0.001
+k: 12                      # hypotheses per step
+
+# --- Temperature controller ---
+temp_initial: 1.2
+temp_max: 1.6
+temp_step: 0.05
+temp_patience: 500
+temp_cooldown: 800
+
+# --- LoRA ---
+lora_r: 16
+lora_alpha: 32
+lora_target_modules:
+  - q_proj
+  - v_proj
+lora_dropout: 0.05
+
+# --- Quantisation ---
+load_in_4bit: true
+bnb_4bit_compute_dtype: "bfloat16"
+bnb_4bit_use_double_quant: true
+bnb_4bit_quant_type: "nf4"
+
+# --- Evaluation ---
+eval_every: 50
+eval_n_samples: 100
+eval_batch_size: 8
+max_new_tokens_train: 64
+max_new_tokens_eval: 128
+
+# --- Checkpointing ---
+checkpoint_step: 3000      # 0 = disabled
+
+# --- Output ---
+output_dir: null           # defaults to results/{tag}
+tag: null                  # defaults to {reward}_{reward_mode}_{timestamp}
+
+# --- BERTScore language map ---
+# NLLB lang tag -> BERTScore lang code.
+# Unlisted langs fall back to bert-base-multilingual-cased (no rescaling).
+bertscore_lang_map:
+  bod_Tibt: "zh"
+  zho_Hant: "zh"
+  zho_Hans: "zh"
+  arb_Arab: "ar"
+  eus_Latn: "eu"
+  bel_Cyrl: "be"
+  jpn_Jpan: "ja"
+  tur_Latn: "tr"
+  swh_Latn: "en"    # no Swahili model; multilingual fallback preferred
+  ben_Beng: "bn"
+  ces_Latn: "cs"
+  pol_Latn: "pl"

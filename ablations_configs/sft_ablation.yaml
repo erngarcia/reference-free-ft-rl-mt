@@ -1,0 +1,59 @@
+# ============================================================
+# SFT Ablation Configuration
+# ============================================================
+# Usage:
+#   python sft_ablation.py --config sft_ablation.yaml
+#   python sft_ablation.py --config sft_ablation.yaml --languages eus_Latn
+#
+# CLI args override config values where both are specified.
+# ============================================================
+
+# --- Model ---
+model_name: "facebook/nllb-200-distilled-1.3B"
+
+# --- Data ---
+train_data_dir: "data/flores200_dataset"   # expects {lang}/dev.parquet
+eval_data_dir: "data/flores200_dataset"    # expects {lang}/devtest.parquet
+
+# --- Comparison results (produced by train_grpo.py) ---
+vanilla_dir: "."     # expects results_{lang}_vanilla.csv
+grpo_dir: "."         # expects results_{lang}_grpo.csv
+
+# --- Languages ---
+languages:
+  - arb_Arab
+  - bel_Cyrl
+  - ces_Latn
+  - eus_Latn
+  - pol_Latn
+
+# --- Training ---
+lr: 5.0e-6
+max_length: 128
+
+# --- LoRA (identical to GRPO for fair comparison) ---
+lora_r: 16
+lora_alpha: 32
+lora_target_modules:
+  - q_proj
+  - v_proj
+lora_dropout: 0.05
+
+# --- Quantisation ---
+load_in_4bit: true
+bnb_4bit_compute_dtype: "bfloat16"
+bnb_4bit_use_double_quant: true
+bnb_4bit_quant_type: "nf4"
+
+# --- Evaluation ---
+max_new_tokens_eval: 128
+num_beams: 5
+comet_batch_size: 16
+
+# --- Significance testing ---
+n_bootstrap: 1000
+bootstrap_seed: 42
+
+# --- Output ---
+output_dir: null   # defaults to results/{tag}
+tag: null          # defaults to sft_{timestamp}

@@ -1,0 +1,89 @@
+# ============================================================
+# Training Data Size Ablation (Table 3)
+# ============================================================
+# Compares vanilla NLLB-200 vs SFT vs GRPO across training-set
+# sizes N in {100, 250, 500, 1000} for a small set of languages.
+#
+# Usage:
+#   python ablation_data_size.py --config ablation_data_size.yaml
+#   python ablation_data_size.py --config ablation_data_size.yaml --train_sizes 100 500
+#
+# CLI args override config values where both are specified.
+# ============================================================
+
+# --- Model ---
+model_name: "facebook/nllb-200-distilled-600M"
+
+# --- Data ---
+train_file: "data/flores200_dataset"           # expects {lang}/dev.parquet
+eval_data_dir: "data/flores200_dataset"        # expects {lang}/dev.parquet (GRPO intermediate eval)
+final_eval_data_dir: null                      # expects {lang}/devtest.parquet; defaults to eval_data_dir
+
+# --- Languages & data sizes ---
+languages:
+  - eus_Latn
+  - zho_Hant
+
+train_sizes:
+  - 100
+  - 250
+  - 500
+  - 1000
+
+# --- GRPO ---
+reward: "hybrid"
+reward_mode: "standard"
+soft_rank_temp: 0.05
+n_epochs: 3
+lr: 5.0e-6
+kl_beta: 0.001
+k: 12
+
+temp_initial: 1.2
+temp_max: 1.6
+temp_step: 0.05
+temp_patience: 500
+temp_cooldown: 800
+
+eval_every: 50
+eval_n_samples: 100
+eval_batch_size: 8
+max_new_tokens_train: 64
+checkpoint_step: 0
+
+# --- SFT ---
+sft_lr: 5.0e-6
+sft_epochs: 1
+max_length: 128
+
+# --- Shared evaluation ---
+# (vanilla/SFT/GRPO are all scored with train_grpo's translate_corpus/score_corpus,
+#  which use beam=5 internally)
+max_new_tokens_eval: 128
+
+# --- LoRA (identical across SFT/GRPO for fair comparison) ---
+lora_r: 16
+lora_alpha: 32
+lora_target_modules:
+  - q_proj
+  - v_proj
+lora_dropout: 0.05
+
+# --- Quantisation ---
+load_in_4bit: true
+bnb_4bit_compute_dtype: "bfloat16"
+bnb_4bit_use_double_quant: true
+bnb_4bit_quant_type: "nf4"
+
+# --- Significance testing ---
+n_bootstrap: 1000
+bootstrap_seed: 42
+
+# --- BERTScore language map ---
+bertscore_lang_map:
+  eus_Latn: "eu"
+  zho_Hant: "zh"
+
+# --- Output ---
+output_dir: null   # defaults to results/{tag}
+tag: null          # defaults to data_size_ablation_{timestamp}

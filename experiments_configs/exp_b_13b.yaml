@@ -1,0 +1,78 @@
+# ============================================================
+# GRPO Training Configuration — Experiment B (CCNews, 600M)
+# ============================================================
+
+model_name: "facebook/nllb-200-distilled-1.3B"
+
+train_file: "data/wmt_news_en_10k/cc_news_en_10k.parquet"
+eval_data_dir: "data/flores200_dataset"
+final_eval_data_dir: null
+vanilla_dir: null
+n_segments: null
+
+languages:
+  - eus_Latn
+  - swh_Latn
+  - bod_Tibt
+  - tur_Latn
+  - jpn_Jpan
+  - zho_Hant
+  - zho_Hans
+  - yor_Latn
+  - arb_Arab
+  - bel_Cyrl
+  - ben_Beng
+  - ces_Latn
+  - pol_Latn
+
+reward: "hybrid"
+reward_mode: "standard"
+soft_rank_temp: 0.05
+
+n_epochs: 1              # 10k steps via n_segments
+n_segments: 10000
+lr: 5.0e-6
+kl_beta: 0.001
+k: 12
+
+temp_initial: 1.2
+temp_max: 1.6
+temp_step: 0.05
+temp_patience: 500
+temp_cooldown: 800
+
+lora_r: 16
+lora_alpha: 32
+lora_target_modules:
+  - q_proj
+  - v_proj
+lora_dropout: 0.05
+
+load_in_4bit: true
+bnb_4bit_compute_dtype: "bfloat16"
+bnb_4bit_use_double_quant: true
+bnb_4bit_quant_type: "nf4"
+
+eval_every: 50
+eval_n_samples: 100
+eval_batch_size: 8
+max_new_tokens_train: 64
+max_new_tokens_eval: 128
+
+checkpoint_step: 3000
+output_dir: null
+tag: null
+
+bertscore_lang_map:
+  bod_Tibt: "zh"
+  zho_Hant: "zh"
+  zho_Hans: "zh"
+  arb_Arab: "ar"
+  eus_Latn: "eu"
+  bel_Cyrl: "be"
+  jpn_Jpan: "ja"
+  tur_Latn: "tr"
+  swh_Latn: "en"
+  ben_Beng: "bn"
+  ces_Latn: "cs"
+  pol_Latn: "pl"
