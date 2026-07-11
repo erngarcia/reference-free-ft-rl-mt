@@ -1,0 +1,87 @@
+# ============================================================
+# Reward Component Ablation
+# ============================================================
+# Isolates the contribution of each reward signal to GRPO
+# training: LaBSE alone ("semantic"), COMET-Kiwi alone ("comet"),
+# and the hybrid combination used in the main experiments.
+# Restricted to 2 languages to keep compute manageable.
+#
+# Usage:
+#   python ablation_reward_components.py --config ablations_configs/ablation_reward_components.yaml
+#   python ablation_reward_components.py --config ablations_configs/ablation_reward_components.yaml --languages zho_Hant
+#
+# CLI args override config values where both are specified.
+# ============================================================
+
+# --- Model ---
+model_name: "facebook/nllb-200-distilled-600M"
+
+# --- Data ---
+train_file: "data/flores200_dataset"           # expects {lang}/dev.parquet
+eval_data_dir: "data/flores200_dataset"        # expects {lang}/dev.parquet (GRPO intermediate eval)
+final_eval_data_dir: null                      # expects {lang}/devtest.parquet; defaults to eval_data_dir
+
+# --- Languages ---
+languages:
+  - eus_Latn
+  - zho_Hant
+
+# --- Reward components to isolate ---
+# hybrid   = 0.5*LaBSE + 0.5*COMET-Kiwi (main experiment setting)
+# semantic = LaBSE only
+# comet    = COMET-Kiwi only
+reward_components:
+  - hybrid
+  - semantic
+  - comet
+
+reward_mode: "standard"    # shaping: standard | soft_rank | contrastive | soft_rank_contrastive
+soft_rank_temp: 0.05
+
+# --- Training ---
+n_epochs: 3
+lr: 5.0e-6
+kl_beta: 0.001
+k: 12
+
+# --- Temperature controller ---
+temp_initial: 1.2
+temp_max: 1.6
+temp_step: 0.05
+temp_patience: 500
+temp_cooldown: 800
+
+# --- LoRA ---
+lora_r: 16
+lora_alpha: 32
+lora_target_modules:
+  - q_proj
+  - v_proj
+lora_dropout: 0.05
+
+# --- Quantisation ---
+load_in_4bit: true
+bnb_4bit_compute_dtype: "bfloat16"
+bnb_4bit_use_double_quant: true
+bnb_4bit_quant_type: "nf4"
+
+# --- Evaluation ---
+eval_every: 50
+eval_n_samples: 100
+eval_batch_size: 8
+max_new_tokens_train: 64
+max_new_tokens_eval: 128
+checkpoint_step: 0
+
+# --- Significance testing ---
+n_bootstrap: 1000
+bootstrap_seed: 42
+
+# --- BERTScore language map ---
+bertscore_lang_map:
+  eus_Latn: "eu"
+  zho_Hant: "zh"
+
+# --- Output ---
+output_dir: null   # defaults to results/{tag}
+tag: null          # defaults to reward_components_ablation_{timestamp}
